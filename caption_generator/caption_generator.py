@@ -19,6 +19,7 @@ class CaptionGenerator():
         self.index_word = None
         self.word_index = None
         self.total_samples = None
+        self.total_samples_dev = None
         self.encoded_images = pickle.load( open( "encoded_images.p", "rb" ) )
         self.variable_initializer()
 
@@ -34,8 +35,20 @@ class CaptionGenerator():
         self.total_samples=0
         for text in caps:
             self.total_samples+=len(text.split())-1
-        print "Total samples : "+str(self.total_samples)
-        
+        print "Total samples Train : "+str(self.total_samples)
+
+        df_dev = pd.read_csv('Flickr8k_text/flickr_8k_dev_dataset.txt', delimiter='\t')
+        nb_samples = df_dev.shape[0]
+        iter = df_dev.iterrows()
+        for i in range(nb_samples):
+            x = iter.next()
+            caps.append(x[1][1])
+
+        self.total_samples_dev=0
+        for text in caps:
+            self.total_samples_dev+=len(text.split())-1
+        print "Total samples Dev : "+str(self.total_samples_dev)
+
         words = [txt.split() for txt in caps]
         unique = []
         for word in words:
@@ -59,13 +72,13 @@ class CaptionGenerator():
         print "Variables initialization done!"
 
 
-    def data_generator(self, batch_size = 32):
+    def data_generator(self, path, batch_size = 32):
         partial_caps = []
         next_words = []
         images = []
         print "Generating data..."
         gen_count = 0
-        df = pd.read_csv('Flickr8k_text/flickr_8k_train_dataset.txt', delimiter='\t')
+        df = pd.read_csv(path, delimiter='\t')
         nb_samples = df.shape[0]
         iter = df.iterrows()
         caps = []
@@ -85,6 +98,7 @@ class CaptionGenerator():
                 for i in range(len(text.split())-1):
                     total_count+=1
                     partial = [self.word_index[txt] for txt in text.split()[:i+1]]
+                    #print partial, [txt for txt in text.split()[:i+1]]
                     partial_caps.append(partial)
                     next = np.zeros(self.vocab_size)
                     next[self.word_index[text.split()[i+1]]] = 1
@@ -140,3 +154,4 @@ class CaptionGenerator():
 
     def get_word(self,index):
         return self.index_word[index]
+

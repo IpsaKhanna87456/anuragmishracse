@@ -36,11 +36,18 @@ def prepare_dataset(no_imgs = -1):
 	test_imgs = f_test_images.read().strip().split('\n') if no_imgs == -1 else f_test_images.read().strip().split('\n')[:no_imgs]
 	f_test_images.close()
 
+	f_dev_images = open('Flickr8k_text/Flickr_8k.devImages.txt','rb')
+	dev_imgs = f_dev_images.read().strip().split('\n') if no_imgs == -1 else f_dev_images.read().strip().split('\n')[:no_imgs]
+	f_dev_images.close()
+
 	f_train_dataset = open('Flickr8k_text/flickr_8k_train_dataset.txt','wb')
 	f_train_dataset.write("image_id\tcaptions\n")
 
 	f_test_dataset = open('Flickr8k_text/flickr_8k_test_dataset.txt','wb')
 	f_test_dataset.write("image_id\tcaptions\n")
+
+	f_dev_dataset = open('Flickr8k_text/flickr_8k_dev_dataset.txt','wb')
+	f_dev_dataset.write("image_id\tcaptions\n")
 
 	f_captions = open('Flickr8k_text/Flickr8k.token.txt', 'rb')
 	captions = f_captions.read().strip().split('\n')
@@ -76,6 +83,17 @@ def prepare_dataset(no_imgs = -1):
 			f_test_dataset.flush()
 			c_test += 1
 	f_test_dataset.close()
+
+	c_dev = 0
+	for img in dev_imgs:
+		encoded_images[img] = get_encoding(encoding_model, img)
+		for capt in data[img]:
+			caption = "<start> "+capt+" <end>"
+			f_dev_dataset.write(img+"\t"+caption+"\n")
+			f_dev_dataset.flush()
+			c_dev += 1
+	f_dev_dataset.close()
+
 	with open( "encoded_images.p", "wb" ) as pickle_f:
 		pickle.dump( encoded_images, pickle_f )  
 	return [c_train, c_test]
@@ -84,3 +102,4 @@ if __name__ == '__main__':
 	c_train, c_test = prepare_dataset()
 	print "Training samples = "+str(c_train)
 	print "Test samples = "+str(c_test)
+
